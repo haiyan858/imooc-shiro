@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+    <import resource="classpath:spring/spring-redis.xml"/>
+
+    <import resource="classpath:spring/spring-dao.xml"/>
+
+    <context:component-scan base-package="com.imooc"/>
+
+    <!-- shiro 过滤器, 要与 web.xml 中的 Filter Name 相同-->
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <property name="securityManager" ref="securityManager"/>
+
+        <!-- 登录页面, 未认证时访问需要认证或授权的资源会自动跳转到此页面 -->
+        <property name="loginUrl" value="login.html"/>
+
+        <!-- 登录后, 访问未授权的资源会跳转到此页面 -->
+        <property name="unauthorizedUrl" value="403.html"/>
+        <property name="filterChainDefinitions">
+            <!--
+            anon 表示不用验证
+            roles["",""...]配置访问的url需要验证的角色，包含所有才通过
+            perms["",""...]配置访问的url需要验证的权限，包含所有才通过
+            authc 表示需要用户登录
+            -->
+            <value>
+                /login.html = anon
+                /subLogin = anon
+                /testRole = roles["admin","admin1"]
+                /testRole1 = rolesOr["admin","admin1"]
+                <!--/testPerms = perms["user:delete"]
+                /testPerms1 = perms["user:delete","user:update"] &lt;!&ndash;这里有个一个坑，必须使用双引号。使用单引号报错。 使用2个，必须同时满足2个&ndash;&gt;-->
+                /* = authc
+            </value>
+        </property>
+
+        <property name="filters">
+            <util:map>
+                <entry key="rolesOr" value-ref="rolesOrFilter"/>
+            </util:map>
+        </property>
+    </bean>
+
+    <bean class="com.imooc.filter.RolesOrFilter" id="rolesOrFilter"/>
+
+
+    <!--创建SecurityMananger对象-->
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <!--设置自定义Realm-->
+        <property name="realm" ref="realm"/>
+
+        <!--设置自定义的Session管理器  配置了记住我，测试记住我功能时请注释-->
+        <property name="sessionManager" ref="sessionManager"/>
+
+        <!--设置自定义的Cache管理器 配置了记住我，测试记住我功能时请注释-->
+        <property name="cacheManager" ref="cacheManager"/>
+
+        <property name="rememberMeManager" ref="cookieRememberMeManager"/>
+    </bean>
+
+    <!--定义自定义的Realm-->
+    <bean id="realm" class="com.imooc.shiro.realm.CustomRealm">
+        <property name="credentialsMatcher" ref="credentialsMatcher"/>
+    </bean>
+
+    <!--设置加密的算法-->
+    <bean class="org.apache.shiro.authc.credential.HashedCredentialsMatcher"
+          id="credentialsMatcher">
+        <property name="hashAlgorithmName" value="md5"/>
+        <property name="hashIterations" value="1"/>
+    </bean>
+
+    <!--<bean class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager" id="sessionManager">-->
+    <bean class="com.imooc.session.CustomSessionManager" id="sessionManager">
+        <property name="sessionDAO" ref="redisSessionDao"/>
+    </bean>
+
+    <bean class="com.imooc.session.RedisSessionDao" id="redisSessionDao"/>
+
+    <bean class="com.imooc.cache.RedisCacheManager" id="cacheManager"/>
+
+    <bean class="org.apache.shiro.web.mgt.CookieRememberMeManager" id="cookieRememberMeManager">
+        <property name="cookie" ref="cookie"/>
+    </bean>
+
+    <bean class="org.apache.shiro.web.servlet.SimpleCookie" id="cookie">
+        <constructor-arg value="rememberMe" />
+        <property name="maxAge" value="2000000"/>
+    </bean>
+
+</beans>
