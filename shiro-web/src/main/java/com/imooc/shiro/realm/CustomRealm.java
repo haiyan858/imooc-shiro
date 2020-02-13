@@ -76,9 +76,10 @@ public class CustomRealm extends AuthorizingRealm {
     }
 
     @Override
-    protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authenticationToken) throws AuthenticationException {
+    protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
         //1 从主体传过来的认证信息中，获取用户名
-        String username = (String) authenticationToken.getPrincipal();
+        //这个是controller 传过来的， 从表单获取的 - > subject.login(token); //执行登录
+        String username = (String) token.getPrincipal(); // 此处两个token是同一个
 
         //2 通过用户名到数据中获取凭证
         String password = getPasswordByUserName(username);
