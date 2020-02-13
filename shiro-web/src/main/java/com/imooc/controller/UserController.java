@@ -27,23 +27,26 @@ public class UserController {
     public String subLogin(User user) {
         Subject subject = SecurityUtils.getSubject();
 
-        String username = user.getUsername();
-        String password = user.getPassword();
+        if(!subject.isAuthenticated()){ //当前用户是否已经被认证（登录）
+            String username = user.getUsername();
+            String password = user.getPassword();
 
-        UsernamePasswordToken token = new UsernamePasswordToken(username, password);
+            UsernamePasswordToken token = new UsernamePasswordToken(username, password);
 
-        try {
-            token.setRememberMe(user.isRememberMe()); //记住我
-            subject.login(token);
-        } catch (AuthenticationException e) {
-            return e.getMessage();
+            try {
+                token.setRememberMe(user.isRememberMe()); //记住我（前台是否勾选复选框）
+                subject.login(token); //执行登录
+            } catch (AuthenticationException e) {
+                return e.getMessage();
+            }
+
+            if (subject.hasRole("admin")) {
+                return "有admin权限";
+            }
+            return "无admin权限";
         }
 
-        if (subject.hasRole("admin")) {
-            return "有admin权限";
-        }
-
-        return "无admin权限";
+        return "未登录";
     }
 
 
