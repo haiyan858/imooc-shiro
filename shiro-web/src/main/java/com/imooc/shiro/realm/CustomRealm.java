@@ -29,11 +29,15 @@ public class CustomRealm extends AuthorizingRealm {
 
     @Resource
     private UserDao userDao;
-
     {
         super.setName("customRealm");
     }
 
+    /**
+     * 用于授权
+     * @param principalCollection
+     * @return
+     */
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principalCollection) {
         String username = (String) principalCollection.getPrimaryPrincipal();
@@ -75,6 +79,12 @@ public class CustomRealm extends AuthorizingRealm {
         return sets;
     }
 
+    /**
+     * 用于认证
+     * @param token
+     * @return
+     * @throws AuthenticationException
+     */
     @Override
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
         //1 从主体传过来的认证信息中，获取用户名
@@ -90,6 +100,7 @@ public class CustomRealm extends AuthorizingRealm {
         //SimpleAuthenticationInfo simpleAuthenticationInfo = new SimpleAuthenticationInfo("Mark", password, "customRealm");
         //simpleAuthenticationInfo.setCredentialsSalt(ByteSource.Util.bytes("Mark"));
 
+        //realName 表示 the realm from where the principal and credentials were acquired.
         SimpleAuthenticationInfo simpleAuthenticationInfo = new SimpleAuthenticationInfo(username, password, "customRealm");
         simpleAuthenticationInfo.setCredentialsSalt(ByteSource.Util.bytes(username));
         return simpleAuthenticationInfo;
